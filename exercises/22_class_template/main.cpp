@@ -1,5 +1,6 @@
 ﻿#include "../exercise.h"
 #include <cstring>
+#include <vector>
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
 template<class T>
@@ -8,9 +9,12 @@ struct Tensor4D {
     T *data;
 
     Tensor4D(unsigned int const shape_[4], T const *data_) {
-        unsigned int size = 1;
-        // TODO: 填入正确的 shape 并计算 size
+        unsigned int size = shape_[0]*shape_[1]*shape_[2]*shape_[3];
+        // DONE: 填入正确的 shape 并计算 size
         data = new T[size];
+        for(int i=0; i<4; i++) {
+            shape[i] = shape_[i];
+        }
         std::memcpy(data, data_, size * sizeof(T));
     }
     ~Tensor4D() {
@@ -27,7 +31,30 @@ struct Tensor4D {
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
-        // TODO: 实现单向广播的加法
+        // DONE: 实现单向广播的加法
+        unsigned others_size = others.shape[0];
+        std::vector<unsigned int> strides(4);
+        strides[3] = 1;
+        for(int i=3; i>0; i--) {
+            strides[i-1] = strides[i] * shape[i];
+            others_size *= others.shape[i];
+        }
+        unsigned size = shape[0] * strides[0];
+        T *data_ = new T[size*4]; // 没开够会内存访问错误，不管手动 copy 还是调库都一样
+        std::copy(others.data, others.data + others_size, data_);
+        for(int d=3; d>0; d--) {
+            if(others.shape[d] == 1 && shape[d] > 1) {
+                for(int i = (size - strides[d]) / strides[d]; i >= 0; i--) {
+                    for(unsigned j = i*shape[d]; j < (i+1)*shape[d]; j++) {
+                        std::copy(data_ + i*strides[d], data_ + (i+1)*strides[d], data_ + j*strides[d]);
+                    }
+                }
+            }
+        }
+        for(unsigned i=0; i<size; i++) {
+            data[i] += data_[i];
+        }
+        delete data_;
         return *this;
     }
 };

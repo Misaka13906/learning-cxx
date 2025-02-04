@@ -1,5 +1,6 @@
 ﻿#include "../exercise.h"
 #include <cstring>
+#include <numeric>
 
 // READ: 模板非类型实参 <https://zh.cppreference.com/w/cpp/language/template_parameters#%E6%A8%A1%E6%9D%BF%E9%9D%9E%E7%B1%BB%E5%9E%8B%E5%AE%9E%E5%8F%82>
 
@@ -9,9 +10,12 @@ struct Tensor {
     T *data;
 
     Tensor(unsigned int const shape_[N]) {
-        unsigned int size = 1;
-        // TODO: 填入正确的 shape 并计算 size
+        unsigned int size = std::accumulate(shape_, shape_+N, 1, std::multiplies<int>());
+        // DONE: 填入正确的 shape 并计算 size
         data = new T[size];
+        for(unsigned i=0; i<N; i++) {
+            shape[i] = shape_[i];
+        }
         std::memset(data, 0, size * sizeof(T));
     }
     ~Tensor() {
@@ -34,7 +38,8 @@ private:
         unsigned int index = 0;
         for (unsigned int i = 0; i < N; ++i) {
             ASSERT(indices[i] < shape[i], "Invalid index");
-            // TODO: 计算 index
+            // DONE: 计算 index
+            index = (index * shape[i]) + indices[i];
         }
         return index;
     }
